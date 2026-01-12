@@ -26,7 +26,7 @@ app.use(express.json());
 
 // routes
 
-app.post('/url', (req, res) => {
+app.post('/url', async (req, res) => {
 
     const shortURL = shortid.generate();
 
@@ -35,38 +35,72 @@ app.post('/url', (req, res) => {
         return res.status(400).send({ error: 'originalURL is required' });
     }
     const originalURL = body.originalURL;
-    const visitedHistory = [];
-    const query = 'INSERT INTO urls(short_url, original_url, visited_history) VALUES($1, $2, $3)';
-    const values = [shortURL, originalURL, visitedHistory];
-    client.query(query, values, (err, result) => {
-        if (err) {
-            console.error('Error inserting URL', err.stack);
-            res.status(500).send('Error saving URL');
-        } else {
-            res.json({ shortURL: `http://localhost:${PORT}/${shortURL}` });
-        }
-    });
+    const visitedHistory = JSON.stringify([]);
+    try {
+        const query = 'INSERT INTO urls (short_url, original_url, visited_history) VALUES ($1, $2, $3)';
+        await client.query(query, [shortURL, originalURL, visitedHistory]);
+        return res.json({
+            message: 'Short URL created successfully',
+            shortURL: shortURL
+        });
+    } catch (err) {
+        console.error('Error inserting URL:', err);
+        return res.status(500).send({
+            error: 'Internal Server Error'
+        })
+    }
 
 });
 
-app.get('/:shortURL', (req, res) => {
+app.get('/:shortURL', async (req, res) => {
     const shortURL = req.params.shortURL;
+    try {
+        const query = `
+            UPDATE urls 
+            SET visited_history = visited_history || $1::jsonb 
+            WHERE short_url = $2 
+            RETURNING original_url`;
 
-    const query = 'SELECT original_url FROM urls WHERE short_url = $1';
-    client.query(query, [shortURL], (err, result) => {
-        if (err) {
-            console.error('Error fetching URL', err.stack);
-            res.status(500).send('Error retrieving URL');
-        } else {
-            if (result.rows.length > 0) {
-                const originalURL = result.rows[0].original_url;
-                res.redirect(originalURL);
-            } else {
-                res.status(404).send('URL not found');
-            }
+        const visitedAt = JSON.stringify([{ visited_at: new Date().toISOString() }]);
+        const result = await client.query(query, [visitedAt, shortURL]);
+
+        if (result.rows.length === 0) {
+            return res.status(404).send({ error: ' URL not found' });
         }
-    });
+
+        const originalURL = result.rows[0].original_url;
+        return res.redirect(originalURL);
+    }
+    catch (err) {
+        console.error('Error retrieving URL:', err);
+        return res.status(500).send({ error: 'Internal Server Error' });
+    }
 });
+
+app.get('/analytics/:shortURL', async (req, res) => {
+    const { shortURL } = req.params;
+    const query = "select visited_history , created_at , updated_at from urls where short_url = $1";
+
+    try {
+        const result = await client.query(query, [shortURL]);
+
+        if (result.rows.length == 0) {
+            return res.status(404).send({ error: "URL not found" })
+        }
+        else {
+            const data = result.rows[0];
+            return res.send({
+                totalClicks: data.visited_history.length,
+                visitedHistory: data.visited_history,
+                createdAt: data.created_at,
+                updatedAt: data.updated_at
+            })
+        }
+    }
+    catch (e) {
+        res.status(500).send({ error: "Internal Server Error" })
+    }
+})
 
 app.listen(PORT, () => console.log(`Server is running on port : ${PORT}`));
 
