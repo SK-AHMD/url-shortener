@@ -1,58 +1,40 @@
-# 🔗 Node.js & PostgreSQL URL Shortener
+# 🔗 PostgreSQL URL Shortener
 
-A modern, high-performance **URL Shortener API** built with **Express.js** and **PostgreSQL**.  
-It converts long URLs into short, shareable links while tracking every visit with precise analytics.
+A simple yet powerful URL shortener built with **Node.js**, **Express**, and **PostgreSQL**. This project generates unique short IDs for long URLs and tracks every click with a timestamp.
 
----
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql&logoColor=white)
+![Node.js](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)
+![Express.js](https://img.shields.io/badge/Express.js-000000?style=for-the-badge&logo=express&logoColor=white)
 
-## 🚀 Why This Project Matters
+## 📋 Features
 
-This system is designed like a **real SaaS backend**:
-
-- Scalable PostgreSQL storage  
-- Accurate click tracking  
-- REST-based API  
-- Production-grade async architecture  
-
-Perfect for:
-- Startups  
-- Marketing tools  
-- Analytics platforms  
-- Backend portfolio  
+- 🔗 Generate short URLs from long URLs
+- 📊 Track click analytics with timestamps
+- ⚡ Fast redirects using database indexing
+- 📈 View detailed visit history
+- 🗃️ PostgreSQL for reliable data storage
+- 🎯 Unique ID generation with collision protection
 
 ---
 
-## ✨ Features
+## 🛠️ Tech Stack
 
-| Feature | Description |
-|--------|-------------|
-| 🔗 Short ID Generation | Uses `shortid` to generate unique, non-predictable URLs |
-| ⚡ Fast Redirects | Optimized lookup and redirection |
-| 📊 Visit Tracking | Every click is stored with timestamp |
-| 🧠 JSONB Analytics | PostgreSQL `JSONB` stores click history efficiently |
-| 🛡 Async/Await | Clean, safe non-blocking backend |
-| 📡 REST API | Easy integration with frontend or mobile apps |
+- **Backend:** Node.js & Express
+- **Database:** PostgreSQL (with JSONB for analytics)
+- **ID Generation:** Shortid library
+- **HTTP Client:** Axios (if used for URL validation)
+- **Environment Variables:** dotenv (recommended)
 
 ---
 
-## 🛠 Tech Stack
+## 🗄️ Database Setup
 
-- **Node.js**
-- **Express.js**
-- **PostgreSQL**
-- **shortid**
-- **pg (node-postgres)**
-
----
-
-## 🗄 Database Schema
-
-Run this in PostgreSQL (`psql` or pgAdmin):
+Before running the application, you need to create the table in your PostgreSQL database. Run the following SQL script:
 
 ```sql
 CREATE TABLE urls (
     id SERIAL PRIMARY KEY,
-    short_url VARCHAR(15) UNIQUE NOT NULL,
+    short_url VARCHAR(10) UNIQUE NOT NULL,
     original_url TEXT NOT NULL,
     visited_history JSONB DEFAULT '[]',
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
