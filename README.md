@@ -22,8 +22,6 @@ A simple yet powerful URL shortener built with **Node.js**, **Express**, and **P
 - **Backend:** Node.js & Express
 - **Database:** PostgreSQL (with JSONB for analytics)
 - **ID Generation:** Shortid library
-- **HTTP Client:** Axios (if used for URL validation)
-- **Environment Variables:** dotenv (recommended)
 
 ---
 
